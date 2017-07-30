@@ -8,10 +8,10 @@
 // Test that header file is self-contained.
 //#include <beast/http/uri.hpp>
 
-#include <beast/core/error.hpp>
-#include <beast/core/string.hpp>
-#include <beast/http/error.hpp>
-#include <beast/unit_test/suite.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/core/string.hpp>
+#include <boost/beast/http/error.hpp>
+#include <boost/beast/unit_test/suite.hpp>
 #include <boost/lexical_cast.hpp>
 #include <cstring>
 
@@ -26,6 +26,7 @@
     https://tools.ietf.org/html/rfc7231
 */
 
+namespace boost {
 namespace beast {
 namespace http {
 
@@ -48,17 +49,19 @@ struct uri
 
 } // http
 } // beast
+} // boost
 
 namespace boost {
 namespace system {
 template<>
-struct is_error_code_enum<beast::http::uri::error>
+struct is_error_code_enum<boost::beast::http::uri::error>
 {
     static bool const value = true;
 };
 } // system
 } // boost
 
+namespace boost {
 namespace beast {
 namespace http {
 
@@ -1281,6 +1284,16 @@ operator<<(std::ostream& os, uri_view const& u)
 class uri_test : public unit_test::suite
 {
 public:
+    template<class T>
+    static
+    std::string
+    lexical_to_string(T const& t)
+    {
+        std::stringstream ss;
+        ss << t;
+        return ss.str();
+    }
+
     void
     err(string_view s)
     {
@@ -1335,8 +1348,8 @@ public:
                 if(! BEAST_EXPECTS(! ec, ec.message()))
                     return;
                 BEAST_EXPECTS(
-                    boost::lexical_cast<std::string>(u) == s,
-                    boost::lexical_cast<std::string>(u));
+                    lexical_to_string(u) == s,
+                    lexical_to_string(u));
                 print(u);
             };
 
@@ -1349,8 +1362,8 @@ public:
                 if(! BEAST_EXPECTS(! ec, ec.message()))
                     return;
                 BEAST_EXPECTS(
-                    boost::lexical_cast<std::string>(u) == s,
-                    boost::lexical_cast<std::string>(u));
+                    lexical_to_string(u) == s,
+                    lexical_to_string(u));
                 print(u);
             };
 
@@ -1436,7 +1449,8 @@ public:
     }
 };
 
-BEAST_DEFINE_TESTSUITE(uri,http,beast);
+BOOST_BEAST_DEFINE_TESTSUITE(uri,http,beast);
 
 } // http
 } // beast
+} // boost
