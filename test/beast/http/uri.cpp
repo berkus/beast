@@ -79,7 +79,7 @@ public:
     std::string
     message(int ev) const override
     {
-        switch(static_cast<error>(ev))
+        switch(static_cast<uri::error>(ev))
         {
         case uri::error::mismatch: return "mismatched element";
         case uri::error::syntax: return "syntax error";
@@ -134,6 +134,8 @@ make_error_code(uri::error ev)
 }
 
 //------------------------------------------------------------------------------
+
+#if 0
 
 class uri_view
 {
@@ -1448,8 +1450,67 @@ public:
         testRequestTarget();
     }
 };
+#endif
 
-BOOST_BEAST_DEFINE_TESTSUITE(uri,http,beast);
+/*
+    5.3 Request Target
+    https://tools.ietf.org/html/rfc7230#section-5.3
+
+    request-target  = origin-form
+                    / absolute-form
+                    / authority-form
+                    / asterisk-form
+
+    origin-form     = absolute-path [ "?" query ]
+
+    absolute-form   = absolute-URI
+
+    authority-form  = authority
+ 
+    asterisk-form   = "*"
+*/
+
+/*  Used in direct requests to an origin server,
+    except for CONNECT or OPTIONS *
+*/
+void
+parse_origin_form()
+{
+}
+
+/*  Used in requests to a proxy,
+    except for CONNECT or OPTIONS *
+*/
+void
+parse_absolute_form()
+{
+}
+
+/*  Used in CONNECT requests
+*/
+void
+parse_authority_form()
+{
+}
+
+/*  Used for server-wide OPTIONS requests
+*/
+void
+parse_asterisk_form()
+{
+}
+
+class uri_test : public unit_test::suite
+{
+public:
+    void
+    run() override
+    {
+        pass();
+    }
+};
+
+BEAST_DEFINE_TESTSUITE(beast,http,uri);
 
 } // http
 } // beast
