@@ -15,6 +15,8 @@
 #include <boost/lexical_cast.hpp>
 #include <cstring>
 
+#include <boost/container/flat_set.hpp>
+
 /*
     Uniform Resource Identifier (URI): Generic Syntax
     https://tools.ietf.org/html/rfc3986
@@ -1452,7 +1454,39 @@ public:
 };
 #endif
 
+struct piece
+{
+    unsigned short offset;
+    unsigned short size;
+
+    string_view
+    operator()(char const* base) const
+    {
+        return {base + offset, size};
+    }
+};
+
+template<class FwdIt>
+void
+parse_scheme(
+    FwdIt& it,
+    FwdIt const& end,
+    error_code& ec)
+{
+}
+
 /*
+    Uniform Resource Identifier (URI): Generic Syntax
+    https://tools.ietf.org/html/rfc3986
+
+    Internationalized Resource Identifiers (IRIs)
+    https://tools.ietf.org/html/rfc3987
+
+    Hypertext Transfer Protocol (HTTP/1.1): Semantics and Content
+    https://tools.ietf.org/html/rfc7231
+
+
+
     5.3 Request Target
     https://tools.ietf.org/html/rfc7230#section-5.3
 
@@ -1499,6 +1533,8 @@ void
 parse_asterisk_form()
 {
 }
+
+#define BOOST_ADAPTIVE_MERGE_NLOGN_MERGE
 
 class uri_test : public unit_test::suite
 {
