@@ -6,15 +6,16 @@
 //
 
 // Test that header file is self-contained.
-//#include <beast/http/uri.hpp>
+#include <boost/beast/uri.hpp>
 
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/unit_test/suite.hpp>
 #include <boost/lexical_cast.hpp>
 #include <cstring>
+#include <limits>
 
-#include <boost/container/flat_set.hpp>
+#include <boost/beast/uri/detail/parse.hpp>
 
 /*
     Uniform Resource Identifier (URI): Generic Syntax
@@ -30,106 +31,6 @@
 namespace boost {
 namespace beast {
 namespace uri {
-
-enum class error
-{
-    /// An input did not match a structural element (soft error)
-    mismatch = 1,
-
-    /// A syntax error occurred
-    syntax,
-
-    /// The parser encountered an invalid input
-    invalid
-};
-
-} // uri
-} // beast
-} // boost
-
-namespace boost {
-namespace system {
-template<>
-struct is_error_code_enum<boost::beast::uri::error>
-{
-    static bool const value = true;
-};
-} // system
-} // boost
-
-namespace boost {
-namespace beast {
-namespace uri {
-
-namespace detail {
-
-class uri_error_category : public error_category
-{
-public:
-    const char*
-    name() const noexcept override
-    {
-        return "beast.http.uri";
-    }
-
-    std::string
-    message(int ev) const override
-    {
-        switch(static_cast<uri::error>(ev))
-        {
-        case error::mismatch: return "mismatched element";
-        case error::syntax: return "syntax error";
-        case error::invalid: return "invalid input";
-        default:
-            return "beast.http.uri error";
-        }
-    }
-
-    error_condition
-    default_error_condition(
-        int ev) const noexcept override
-    {
-        return error_condition{ev, *this};
-    }
-
-    bool
-    equivalent(int ev,
-        error_condition const& condition
-            ) const noexcept override
-    {
-        return condition.value() == ev &&
-            &condition.category() == this;
-    }
-
-    bool
-    equivalent(error_code const& error,
-        int ev) const noexcept override
-    {
-        return error.value() == ev &&
-            &error.category() == this;
-    }
-};
-
-inline
-error_category const&
-get_uri_error_category()
-{
-    static uri_error_category const cat{};
-    return cat;
-}
-
-} // detail
-
-inline
-error_code
-make_error_code(error ev)
-{
-    return error_code{
-        static_cast<std::underlying_type<error>::type>(ev),
-            detail::get_uri_error_category()};
-}
-
-//------------------------------------------------------------------------------
 
 #if 0
 
@@ -1448,250 +1349,71 @@ public:
 };
 #endif
 
-namespace detail {
-
-struct parser_impl
-{
-    static
-    bool
-    is_alpha(char c)
-    {
-        unsigned constexpr a = 'a';
-        return ((static_cast<unsigned>(c) | 32) - a) < 26U;
-    }
-
-    static
-    bool
-    is_digit(char c)
-    {
-        unsigned constexpr zero = '0';
-        return (static_cast<unsigned>(c) - zero) < 10;
-    }
-
-    static
-    bool
-    is_alnum(char c)
-    {
-        return is_alpha(c) || is_digit(c);
-    }
-
-    //--------------------------------------------------------------------------
-
-    static
-    char
-    ascii_tolower(char c)
-    {
-        if(c >= 'A' && c <= 'Z')
-            c += 'a' - 'A';
-        return c;
-    }
-
-    static
-    bool
-    is_reserved(char c)
-    {
-    /*
-        reserved    = gen-delims / sub-delims
-
-        gen-delims  = ":" / "/" / "?" / "#" / "[" / "]" / "@"
-
-        sub-delims  = "!" / "$" / "&" / "'" / "(" / ")"
-                          / "*" / "+" / "," / ";" / "="
-    */
-        switch(c)
-        {
-        case ':': case '/': case '?': case '#':  case '[': case ']':
-        case '!': case '$': case '&': case '\'': case '(': case ')':
-        case '*': case '+': case ',': case ';':  case '=':
-            return true;
-        }
-        return false;
-    }
-
-    static
-    bool
-    is_unreserved(char c)
-    {
-    /*
-        unreserved      = ALPHA / DIGIT / "-" / "." / "_" / "~"
-    */
-        return
-            (c >= 'A' && c <= 'Z') ||
-            (c >= 'a' && c <= 'z') ||
-            (c >= '0' && c <= '9') ||
-             c == '-' || c == '.'  ||
-             c == '_' || c == '~'
-            ;
-    } 
-
-    static
-    bool
-    is_sub_delim(char c)
-    {
-    /*
-        sub-delims      = "!" / "$" / "&" / "'" / "(" / ")"
-                              / "*" / "+" / "," / ";" / "="
-    */
-        return
-            c == '!' || c == '$' || c == '&' || c == '\'' ||
-            c == '(' || c == ')' || c == '*' || c == '+'  ||
-            c == ',' || c == ';' || c == '='
-            ;
-    }
-
-    static
-    int
-    hex_val(char c)
-    {
-        if(c >= '0' && c <= '9')
-            return c - '0';
-        if(c >= 'A' && c <= 'F')
-            return c - 'A' + 10;
-        if(c >= 'a' && c <= 'f')
-            return c - 'a' + 10;
-        return -1;
-    }
-
-    static
-    char
-    hex_digit(int v)
-    {
-        if(v < 10)
-            return static_cast<char>(
-                '0' + v);
-        return static_cast<char>(
-            'A' + v - 10);
-    }
-
-    //--------------------------------------------------------------------------
-
-    struct null_writer
-    {
-        template<class F>
-        void
-        operator()(std::size_t, F&&) const
-        {
-        }
-    };
-
-    struct piece
-    {
-        unsigned short offset = 0;
-        unsigned short size = 0;
-
-        string_view
-        operator()(char const* base) const
-        {
-            return {base + offset, size};
-        }
-    };
-
-    //--------------------------------------------------------------------------
-
-    /*
-        scheme        = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
-    */
-    template<class Writer = null_writer>
-    static
-    void
-    parse_scheme(
-        piece& result,
-        char const*& first,
-        char const* last,
-        error_code& ec,
-        Writer&& f = {})
-    {
-        BOOST_ASSERT(first < last);
-        auto it = first;
-        if(! is_alpha(*it))
-        {
-            // expected ALPHA
-            ec = uri::error::syntax;
-            return;
-        }
-        for(;it < last; ++it)
-            if( ! is_alnum(*it) &&
-                *it != '+' &&
-                *it != '-' &&
-                *it != '.')
-                break;
-        f(it - first,
-            [&](char* dest)
-            {
-                while(first < it)
-                    *dest++ = tolower(*first++);
-            });
-    }
-};
-
-/*
-    Uniform Resource Identifier (URI): Generic Syntax
-    https://tools.ietf.org/html/rfc3986
-
-    Internationalized Resource Identifiers (IRIs)
-    https://tools.ietf.org/html/rfc3987
-
-    Hypertext Transfer Protocol (HTTP/1.1): Semantics and Content
-    https://tools.ietf.org/html/rfc7231
-
-
-
-    5.3 Request Target
-    https://tools.ietf.org/html/rfc7230#section-5.3
-
-    request-target  = origin-form
-                    / absolute-form
-                    / authority-form
-                    / asterisk-form
-
-    origin-form     = absolute-path [ "?" query ]
-
-    absolute-form   = absolute-URI
-
-    authority-form  = authority
- 
-    asterisk-form   = "*"
-*/
-
-/*  Used in direct requests to an origin server,
-    except for CONNECT or OPTIONS *
-*/
-void
-parse_origin_form()
-{
-}
-
-/*  Used in requests to a proxy,
-    except for CONNECT or OPTIONS *
-*/
-void
-parse_absolute_form()
-{
-}
-
-/*  Used in CONNECT requests
-*/
-void
-parse_authority_form()
-{
-}
-
-/*  Used for server-wide OPTIONS requests
-*/
-void
-parse_asterisk_form()
-{
-}
-
-} // detail
-
 class uri_test : public unit_test::suite
 {
 public:
     void
+    test_raw_scheme()
+    {
+        auto const bad =
+        [&](string_view s)
+        {
+            error_code ec;
+            detail::cursor c{s};
+            detail::raw_parts result;
+            detail::parse_scheme(result, c, ec);
+            if(! ec)
+                BEAST_EXPECT(result.scheme(s.data()) != s);
+        };
+
+        auto const good =
+        [&](string_view s)
+        {
+            error_code ec;
+            detail::cursor c{s};
+            detail::raw_parts result;
+            detail::parse_scheme(result, c, ec);
+            BEAST_EXPECTS(! ec, ec.message());
+        };
+
+        bad(":");
+        bad("0:");
+        bad("+:");
+        bad("-:");
+        bad(".:");
+        bad("~:");
+        bad("a!:");
+        bad("a$:");
+        bad("a");
+        bad("Z");
+        bad(".");
+
+        good("A:");
+        good("Z:");
+        good("a:");
+        good("z:");
+        good("aA:");
+        good("aZ:");
+        good("aa:");
+        good("az:");
+        good("a0:");
+        good("a9:");
+        good("a+:");
+        good("a-:");
+        good("a.:");
+        good("x.y.z:");
+    }
+
+    void
+    test_raw()
+    {
+        test_raw_scheme();
+    }
+
+    void
     run() override
     {
-        pass();
+        test_raw();
     }
 };
 
