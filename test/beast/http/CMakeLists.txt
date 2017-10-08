@@ -39,7 +39,6 @@ add_executable (tests-beast-http
     status.cpp
     string_body.cpp
     type_traits.cpp
-    uri.cpp
     vector_body.cpp
     verb.cpp
     write.cpp
