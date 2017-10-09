@@ -1363,7 +1363,7 @@ public:
             detail::raw_parts result;
             detail::parse_scheme(result, c, ec);
             if(! ec)
-                BEAST_EXPECT(result.scheme(s.data()) != s);
+                BEAST_EXPECT(result.scheme_string(s.data()) != s);
         };
 
         auto const good =
@@ -1422,3 +1422,4 @@ BEAST_DEFINE_TESTSUITE(beast,http,uri);
 } // uri
 } // beast
 } // boost
+

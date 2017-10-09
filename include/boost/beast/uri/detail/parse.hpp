@@ -35,6 +35,23 @@ namespace uri {
 
 namespace detail {
 
+struct raw_parts
+{
+    known_scheme scheme = known_scheme::unknown;
+    piece scheme_string;
+    piece authority;
+        piece userinfo;
+            piece username;
+            piece password;
+        piece host;
+        piece port;
+    piece path;
+    piece query;
+    piece fragment;
+};
+
+//------------------------------------------------------------------------------
+
 /*
     literal     = CHAR
 */
@@ -58,7 +75,7 @@ parse_literal(cursor& c, char ch, error_code& ec)
 }
 
 /*
-    scheme      = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+    scheme      = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) ":"
 */
 inline
 void
@@ -102,8 +119,81 @@ parse_scheme(
             return;
         }
     }
-    r.scheme = c.extract(it);
+    r.scheme_string = c.extract(it);
+    r.scheme = string_to_scheme(r.scheme_string(c.begin));
     ++c.pos; // skip ':'
+}
+
+//------------------------------------------------------------------------------
+
+/*
+*/
+inline
+void
+parse_authority(
+    raw_parts& r,
+    cursor& c,
+    error_code& ec)
+{
+/*
+    https://tools.ietf.org/html/rfc3986#section-3.2
+    The authority component is preceded by a double slash ("//") and is
+    terminated by the next slash ("/"), question mark ("?"), or number
+    sign ("#") character, or by the end of the URI.
+*/
+    auto it = c.pos;
+    for(; it != c.end; ++it)
+        if( *it == '/' ||
+            *it == '?' ||
+            *it == '#')
+            break;
+    if(it != c.pos)
+        r.authority = c.extract(it);
+}
+
+//------------------------------------------------------------------------------
+
+/*
+    path-abempty    = *( "/" segment )
+    segment         = *pchar
+
+*/
+inline
+void
+parse_path_abempty(
+    raw_parts& r,
+    cursor& c,
+    error_code& ec)
+{
+}
+
+//------------------------------------------------------------------------------
+
+/*
+   hier-part    = "//" authority path-abempty
+                / path-absolute
+                / path-rootless
+                / path-empty
+*/
+inline
+void
+parse_hier_part(
+    raw_parts& r,
+    cursor& c,
+    error_code& ec)
+{
+    if( c.remain() >= 2 &&
+        c.pos[0] == '/' &&
+        c.pos[1] == '/')
+    {
+        parse_authority(r, c, ec);
+        if(ec)
+            return;
+        parse_path_abempty(r, c, ec);
+        if(ec)
+            return;
+    }
+
 }
 
 //------------------------------------------------------------------------------
@@ -128,6 +218,7 @@ parse_scheme(
 /*  Used in direct requests to an origin server,
     except for CONNECT or OPTIONS *
 */
+inline
 void
 parse_origin_form()
 {
@@ -139,6 +230,7 @@ parse_origin_form()
 
     https://tools.ietf.org/html/rfc3986#section-4.3
 */
+inline
 void
 parse_absolute_form(
     raw_parts& r,
@@ -149,13 +241,26 @@ parse_absolute_form(
     parse_scheme(r, c, ec);
     if(ec)
         return;
+    parse_hier_part(r, c, ec);
+    if(ec)
+        return;
 }
 
 /*  Used in CONNECT requests
+
+    The authority-form of request-target is only used for CONNECT requests
+    https://tools.ietf.org/html/rfc7230#section-5.3.3
+
+    Although CONNECT must exclude userinfo and '@' we parse it anyway and
+    let the caller decide what to do with it.
+
+    authority-form  = authority
 */
+inline
 void
-parse_authority_form()
+parse_authority_form(error_code& ec)
 {
+    ec.assign(0, ec.category());
 }
 
 /*  Used for server-wide OPTIONS requests

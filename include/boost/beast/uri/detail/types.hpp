@@ -11,6 +11,7 @@
 #define BOOST_BEAST_URI_DETAIL_TYPES_HPP
 
 #include <boost/beast/core/string.hpp>
+#include <boost/beast/uri/scheme.hpp>
 #include <boost/assert.hpp>
 
 namespace boost {
@@ -90,20 +91,6 @@ struct cursor
         pos = it;
         return p;
     }
-};
-
-struct raw_parts
-{
-    piece scheme;
-    piece authority;
-        piece userinfo;
-            piece username;
-            piece password;
-        piece host;
-        piece port;
-    piece path;
-    piece query;
-    piece fragment;
 };
 
 } // detail

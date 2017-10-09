@@ -153,6 +153,7 @@ to_string(known_scheme s)
     return detail::to_string(s);
 }
 
+inline
 bool
 is_special(known_scheme s)
 {

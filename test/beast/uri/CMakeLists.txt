@@ -16,5 +16,6 @@ add_executable (tests-beast-uri
     ${EXTRAS_INCLUDES}
     ${TEST_MAIN}
     Jamfile
+    scheme.cpp
     uri.cpp
 )

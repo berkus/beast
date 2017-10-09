@@ -8,6 +8,7 @@
 #
 
 local SOURCES =
+    scheme.cpp
     uri.cpp
     ;
 
