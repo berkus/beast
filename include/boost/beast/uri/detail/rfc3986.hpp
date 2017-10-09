@@ -33,7 +33,7 @@ is_digit(char c)
 
 inline
 char
-tolower(char c)
+to_lower(char c)
 {
     if((static_cast<unsigned>(c) - 65U) < 26)
         return c + ('a' - 'A');

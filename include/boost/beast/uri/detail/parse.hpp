@@ -169,6 +169,14 @@ class parser
             end = begin + size;
         }
 
+        void
+        append(char c)
+        {
+            if(pos >= end)
+                throw std::bad_alloc{};
+            *pos++ = c;
+        }
+
         piece
         extract()
         {
@@ -276,7 +284,7 @@ private:
             ec = error::syntax;
             return;
         }
-        auto it = in_.pos;
+        auto& it = in_.pos;
         if(! is_alpha(*it))
         {
             // bad scheme
@@ -285,8 +293,8 @@ private:
         }
         for(;;)
         {
-            ++it;
-            if(it >= in_.end)
+            out_.append(to_lower(*it++));
+            if(in_.empty())
             {
                 // bad scheme
                 ec = error::syntax;
@@ -305,9 +313,11 @@ private:
                 return;
             }
         }
-        p_.scheme_string = in_.extract(it);
-        p_.scheme = string_to_scheme(p_.scheme_string(in_.begin));
-        ++in_.pos; // skip ':'
+        p_.scheme_string = out_.extract();
+        p_.scheme = string_to_scheme(p_.scheme_string(out_.begin));
+        ++it; // skip ':'
+        out_.append(':');
+        out_.mark++;
     }
 
     /*
@@ -388,19 +398,6 @@ private:
             return;
         }
         ++in_.pos;
-    }
-
-    //--------------------------------------------------------------------------
-
-    void
-    append(char c)
-    {
-        if(out_.pos < out_.end)
-        {
-            *out_.pos++ = c;
-            return;
-        }
-        throw std::bad_alloc{};
     }
 };
 

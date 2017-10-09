@@ -1366,11 +1366,11 @@ public:
             p.parse_scheme(ec);
             BEAST_EXPECT(ec);
             if(! ec)
-                BEAST_EXPECT(r.scheme_string(s.data()) != s);
+                BEAST_EXPECT(r.scheme_string(buf.data()) != s);
         };
 
         auto const good =
-        [&](string_view s)
+        [&](string_view s, string_view v)
         {
             error_code ec;
             parts r;
@@ -1378,6 +1378,9 @@ public:
             parser<decltype(buf)> p{s, r, buf};
             p.parse_scheme(ec);
             BEAST_EXPECTS(! ec, ec.message());
+            BEAST_EXPECTS(
+                r.scheme_string(buf.data()) == v,
+                r.scheme_string(buf.data()));
         };
 
         bad(":");
@@ -1392,20 +1395,20 @@ public:
         bad("Z");
         bad(".");
 
-        good("A:");
-        good("Z:");
-        good("a:");
-        good("z:");
-        good("aA:");
-        good("aZ:");
-        good("aa:");
-        good("az:");
-        good("a0:");
-        good("a9:");
-        good("a+:");
-        good("a-:");
-        good("a.:");
-        good("x.y.z:");
+        good("A:",      "a");
+        good("Z:",      "z");
+        good("a:",      "a");
+        good("z:",      "z");
+        good("aA:",     "aa");
+        good("aZ:",     "az");
+        good("aa:",     "aa");
+        good("az:",     "az");
+        good("a0:",     "a0");
+        good("a9:",     "a9");
+        good("a+:",     "a+");
+        good("a-:",     "a-");
+        good("a.:",     "a.");
+        good("x.y.z:",  "x.y.z");
     }
 
     void
