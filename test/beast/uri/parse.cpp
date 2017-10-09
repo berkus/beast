@@ -31,6 +31,7 @@
 namespace boost {
 namespace beast {
 namespace uri {
+namespace detail {
 
 #if 0
 
@@ -1349,7 +1350,7 @@ public:
 };
 #endif
 
-class uri_test : public unit_test::suite
+class parse_test : public unit_test::suite
 {
 public:
     void
@@ -1359,20 +1360,23 @@ public:
         [&](string_view s)
         {
             error_code ec;
-            detail::cursor c{s};
-            detail::raw_parts result;
-            detail::parse_scheme(result, c, ec);
+            parts r;
+            static_buffer<2048> buf;
+            parser<decltype(buf)> p{s, r, buf};
+            p.parse_scheme(ec);
+            BEAST_EXPECT(ec);
             if(! ec)
-                BEAST_EXPECT(result.scheme_string(s.data()) != s);
+                BEAST_EXPECT(r.scheme_string(s.data()) != s);
         };
 
         auto const good =
         [&](string_view s)
         {
             error_code ec;
-            detail::cursor c{s};
-            detail::raw_parts result;
-            detail::parse_scheme(result, c, ec);
+            parts r;
+            static_buffer<2048> buf;
+            parser<decltype(buf)> p{s, r, buf};
+            p.parse_scheme(ec);
             BEAST_EXPECTS(! ec, ec.message());
         };
 
@@ -1417,8 +1421,9 @@ public:
     }
 };
 
-BEAST_DEFINE_TESTSUITE(beast,http,uri);
+BEAST_DEFINE_TESTSUITE(beast,uri,parse);
 
+} // detail
 } // uri
 } // beast
 } // boost
