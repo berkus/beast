@@ -7,13 +7,17 @@
 // Official repository: https://github.com/boostorg/beast
 //
 
-#ifndef BOOST_BEAST_URI_HPP
-#define BOOST_BEAST_URI_HPP
+#ifndef BOOST_BEAST_URI_PARSE_HPP
+#define BOOST_BEAST_URI_PARSE_HPP
 
 #include <boost/beast/config.hpp>
 
-#include <boost/beast/uri/error.hpp>
-#include <boost/beast/uri/scheme.hpp>
-#include <boost/beast/uri/uri_view.hpp>
+namespace boost {
+namespace beast {
+namespace uri {
+
+} // uri
+} // beast
+} // boost
 
 #endif
