@@ -10,7 +10,7 @@
 #ifndef BOOST_BEAST_URI_HPP
 #define BOOST_BEAST_URI_HPP
 
-#include <boost/beast/config.hpp>
+#include <boost/beast/core/detail/config.hpp>
 
 #include <boost/beast/uri/error.hpp>
 #include <boost/beast/uri/scheme.hpp>

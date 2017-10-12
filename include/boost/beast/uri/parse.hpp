@@ -10,7 +10,7 @@
 #ifndef BOOST_BEAST_URI_PARSE_HPP
 #define BOOST_BEAST_URI_PARSE_HPP
 
-#include <boost/beast/config.hpp>
+#include <boost/beast/detail/config.hpp>
 
 namespace boost {
 namespace beast {
