@@ -13,12 +13,15 @@
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/uri/error.hpp>
 #include <boost/beast/uri/scheme.hpp>
+#include <boost/beast/uri/uri.hpp>
+#include <boost/beast/uri/detail/parts.hpp>
 #include <boost/beast/uri/detail/rfc3986.hpp>
 #include <boost/assert.hpp>
 
 namespace boost {
 namespace beast {
 namespace uri {
+namespace detail {
 
 /*  References:
 
@@ -35,67 +38,10 @@ namespace uri {
     https://url.spec.whatwg.org
 */
 
-namespace detail {
-
-struct piece
-{
-    unsigned short offset = 0;
-    unsigned short size = 0;
-
-    piece() = default;
-
-    piece(
-        char const* base,
-        char const* first, char const* last)
-        : offset(static_cast<unsigned short>(first - base))
-        , size(static_cast<unsigned short>(last - first))
-    {
-        BOOST_ASSERT(first - base < (
-            std::numeric_limits<unsigned short>::max)());
-        BOOST_ASSERT(last - first < (
-            std::numeric_limits<unsigned short>::max)());
-    }
-
-    bool
-    empty() const
-    {
-        return size == 0;
-    }
-
-    explicit
-    operator bool() const
-    {
-        return ! empty();
-    }
-
-    string_view
-    operator()(char const* base) const
-    {
-        return {base + offset, size};
-    }
-};
-
-struct parts
-{
-    known_scheme scheme = known_scheme::unknown;
-    piece scheme_string;
-    piece authority;
-        piece userinfo;
-            piece username;
-            piece password;
-        piece host;
-        piece port;
-    piece path;
-    piece query;
-    piece fragment;
-};
-
-//------------------------------------------------------------------------------
-
 template<class Buffer>
 class parser
 {
-    friend class parse_test;
+    friend class uri_test;
 
     struct input
     {
@@ -193,11 +139,10 @@ class parser
 public:
     parser(
         string_view s,
-        parts& p,
-        Buffer& b)
-        : p_(p)
+        basic_uri<Buffer>& u)
+        : p_(u.p_)
         , in_(s)
-        , out_(b)
+        , out_(u.b_)
     {
     }
 
@@ -313,8 +258,9 @@ private:
                 return;
             }
         }
-        p_.scheme_string = out_.extract();
-        p_.scheme = string_to_scheme(p_.scheme_string(out_.begin));
+        p_.scheme = out_.extract();
+        p_.scheme_value = string_to_scheme(
+            p_.scheme(out_.begin));
         ++it; // skip ':'
         out_.append(':');
         out_.mark++;
@@ -413,6 +359,12 @@ public:
         return buf_;
     }
 
+    char const*
+    data() const
+    {
+        return buf_;
+    }
+
     std::size_t
     size() const
     {
@@ -421,7 +373,6 @@ public:
 };
 
 } // detail
-
 } // uri
 } // beast
 } // boost

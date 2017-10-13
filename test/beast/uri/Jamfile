@@ -8,8 +8,8 @@
 #
 
 local SOURCES =
-    parse.cpp
     scheme.cpp
+    uri.cpp
     ;
 
 local RUN_TESTS ;

@@ -1350,37 +1350,48 @@ public:
 };
 #endif
 
-class parse_test : public unit_test::suite
+class uri_test : public unit_test::suite
 {
 public:
+    using buffer = static_buffer<2048>;
+
     void
-    test_raw_scheme()
+    test_scheme()
     {
         auto const bad =
         [&](string_view s)
         {
             error_code ec;
-            parts r;
-            static_buffer<2048> buf;
-            parser<decltype(buf)> p{s, r, buf};
+            basic_uri<buffer> u;
+            parser<buffer> p{s, u};
             p.parse_scheme(ec);
             BEAST_EXPECT(ec);
             if(! ec)
-                BEAST_EXPECT(r.scheme_string(buf.data()) != s);
+                BEAST_EXPECT(u.scheme() != s);
         };
 
         auto const good =
         [&](string_view s, string_view v)
         {
             error_code ec;
-            parts r;
-            static_buffer<2048> buf;
-            parser<decltype(buf)> p{s, r, buf};
+            basic_uri<buffer> u;
+            parser<buffer> p{s, u};
             p.parse_scheme(ec);
             BEAST_EXPECTS(! ec, ec.message());
             BEAST_EXPECTS(
-                r.scheme_string(buf.data()) == v,
-                r.scheme_string(buf.data()));
+                u.scheme() == v, u.scheme());
+        };
+
+        auto const known =
+        [&](string_view s, known_scheme v)
+        {
+            error_code ec;
+            basic_uri<buffer> u;
+            parser<buffer> p{s, u};
+            p.parse_scheme(ec);
+            BEAST_EXPECTS(! ec, ec.message());
+            BEAST_EXPECTS(u.scheme_value() == v,
+                to_string(u.scheme_value()));
         };
 
         bad(":");
@@ -1409,12 +1420,22 @@ public:
         good("a-:",     "a-");
         good("a.:",     "a.");
         good("x.y.z:",  "x.y.z");
+
+        known("Ftp:",   known_scheme::ftp);
+        known("FILE:",  known_scheme::file);
+        known("gopher:",known_scheme::gopher);
+        known("http:",  known_scheme::http);
+        known("https:", known_scheme::https);
+        known("ws:",    known_scheme::ws);
+        known("wss:",   known_scheme::wss);
+
+        known("wsss:",  known_scheme::unknown);
     }
 
     void
     test_raw()
     {
-        test_raw_scheme();
+        test_scheme();
     }
 
     void
@@ -1424,7 +1445,7 @@ public:
     }
 };
 
-BEAST_DEFINE_TESTSUITE(beast,uri,parse);
+BEAST_DEFINE_TESTSUITE(beast,uri,uri);
 
 } // detail
 } // uri

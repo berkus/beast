@@ -14,6 +14,6 @@
 
 #include <boost/beast/uri/error.hpp>
 #include <boost/beast/uri/scheme.hpp>
-#include <boost/beast/uri/uri_view.hpp>
+#include <boost/beast/uri/uri.hpp>
 
 #endif
