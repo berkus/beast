@@ -1350,6 +1350,14 @@ public:
 };
 #endif
 
+/*
+
+Operations on uri:
+
+    - Append query parameter
+
+*/
+
 class uri_test : public unit_test::suite
 {
 public:
@@ -1439,8 +1447,17 @@ public:
     }
 
     void
+    test_use_cases()
+    {
+        auto u = parse_absolute_form("http://www.example.com");
+
+    }
+
+    void
     run() override
     {
+        test_use_cases();
+
         test_raw();
     }
 };
