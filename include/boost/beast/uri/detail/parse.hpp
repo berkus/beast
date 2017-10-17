@@ -178,6 +178,11 @@ public:
         absolute-URI    = scheme ":" hier-part [ "?" query ]
 
         https://tools.ietf.org/html/rfc3986#section-4.3
+
+       To allow for transition to absoluteURIs in all requests in future
+       versions of HTTP, all HTTP/1.1 servers MUST accept the absoluteURI
+       form in requests, even though HTTP/1.1 clients will only generate
+       them in requests to proxies.
     */
     void
     parse_absolute_form(error_code& ec)
