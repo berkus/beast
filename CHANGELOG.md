@@ -1,3 +1,9 @@
+Version 125:
+
+* Update stream write documentation for end of stream changes
+
+--------------------------------------------------------------------------------
+
 Version 124:
 
 * Fix for a test matrix compiler
