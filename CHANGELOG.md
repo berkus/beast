@@ -4,6 +4,14 @@ Version 125:
 * Don't return end_of_stream on win32 file body writes
 * Fix doc typo
 
+API Changes:
+
+* Remove serializer::keep_alive
+
+Actions Required:
+
+* Call message::keep_alive instead of serializer::keep_alive
+
 --------------------------------------------------------------------------------
 
 Version 124:
