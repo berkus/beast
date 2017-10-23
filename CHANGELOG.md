@@ -1,6 +1,7 @@
 Version 125:
 
 * Update stream write documentation for end of stream changes
+* Don't return end_of_stream on win32 file body writes
 
 --------------------------------------------------------------------------------
 

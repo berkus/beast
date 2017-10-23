@@ -482,8 +482,6 @@ operator()(
             sr_.next(ec, null_lambda{});
             BOOST_ASSERT(! ec);
             BOOST_ASSERT(sr_.is_done());
-            if(! sr_.keep_alive())
-                ec = error::end_of_stream;
         }
     }
     h_(ec, bytes_transferred_);
@@ -555,8 +553,6 @@ write_some(
         sr.next(ec, detail::null_lambda{});
         BOOST_ASSERT(! ec);
         BOOST_ASSERT(sr.is_done());
-        if(! sr.keep_alive())
-            ec = error::end_of_stream;
     }
     return nNumberOfBytesToWrite;
 }
